@@ -18,7 +18,8 @@ baraja([[rojo,1], [rojo,2], [rojo,3], [rojo,4], [rojo,5],
         [rojo, salto], [verde, salto], [azul, salto], [amarillo, salto]]).
 */
 
-baraja([[rojo,1], [rojo,1], [rojo,1], [rojo,1], [rojo,1],[rojo, salto]]).
+baraja([[rojo,1], [rojo,1], [rojo,1], [rojo,1], [rojo,1],[rojo, salto]
+       ,[rojo,1],[rojo,1],[rojo,1]]).
 
 
 % Barajar la baraja de cartas
@@ -67,9 +68,21 @@ eliminar_carta(Carta, [OtraCarta|Resto], [OtraCarta|NuevaMano]) :-
     Carta \= OtraCarta,
     eliminar_carta(Carta, Resto, NuevaMano).
 
+tiene_carta(Carta, Jugador):-
+    (not(member(Carta,Jugador)), Carta \= 'mas'),    
+    write("No tienes esta carta!!"), nl.
+
+mas_carta(Carta, RestoBaraja, Jugador, NuevoMazo, Resultado):-
+    Carta == 'mas',
+    agregar_carta(1, RestoBaraja, Jugador, NuevoMazo, Resultado),
+    write("Se agrego una carta a tu mazo"), nl.
+
+salto_carta(Carta):-
+    Carta = [_, salto],
+    write('Skip jugado'), nl.
+
 % Predicado para el turno de un jugador
 %Caso base de turno para terminar el programa
-
 turno(N,_,[],_,_):-
     write('Se termino el Juego, gano el jugador '), 
     (( N = 2,  
@@ -93,22 +106,20 @@ turno(N,Jugador, Contrincante, Centro, RestoBaraja):-
     write('Carta en la mesa: '), write(Centro),  nl,
    	write('Ingresa la carta a jugar (ejemplo [rojo,1])'), read(Carta), nl,
     
-    (((not(member(Carta,Jugador)), Carta \= 'mas'),    
-    write("No tienes esta carta!!"), nl,
+    (
+    (tiene_carta(Carta, Jugador),
     turno(N, Jugador, Contrincante, Centro, RestoBaraja));
     
-    (Carta == 'mas',
-    agregar_carta(1, RestoBaraja, Jugador, NuevoMazo, Resultado),
-    write("Se agrego una carta a tu mazo"), nl,
+    (
+    mas_carta(Carta, RestoBaraja, Jugador, NuevoMazo, Resultado),
     turno(N, Resultado, Contrincante, Centro, NuevoMazo));
      
     (   
-    Carta = [_, salto],
-    write('Skip jugado'), nl,
+    salto_carta(Carta),
     eliminar_carta(Carta, Jugador, JugadorNuevaMano),
     turno(N, JugadorNuevaMano, Contrincante, Carta, RestoBaraja)
     );
-     
+    
     (puede_jugar(Carta, Centro)); 
     
     (write("Esa carta no se puede poner, pon otra!"), nl,
