@@ -20,6 +20,7 @@ baraja([[rojo,1], [rojo,2], [rojo,3], [rojo,4], [rojo,5],
 
 baraja([[rojo,1], [rojo,1], [rojo,1], [rojo,1], [rojo,1],[rojo, salto]]).
 
+
 % Barajar la baraja de cartas
 barajar(Barajeada):-
     baraja(Baraja),
@@ -85,7 +86,6 @@ turno(N,[],_,_,_):-
 
 turno(_,_,_,_,[]):-
     write('Se termino el Juego, quedaron en empate.'), nl.
-
 
 turno(N,Jugador, Contrincante, Centro, RestoBaraja):-
     write("Jugador "), write(N), nl,
