@@ -19,11 +19,12 @@ baraja([[rojo,1], [rojo,2], [rojo,3], [rojo,4], [rojo,5],
         [rojo, salto], [verde, salto], [azul, salto], [amarillo, salto],
         [cambio, color],[cambio, color],[cambio, color],[cambio, color],
         [rojo, mas2], [verde, mas2], [azul, mas2], [amarillo, mas2],
-        [rojo, mas2], [verde, mas2], [azul, mas2], [amarillo, mas2]]).
+        [rojo, mas2], [verde, mas2], [azul, mas2], [amarillo, mas2],
+        [cambio,mazo],[cambio,mazo]]).
 */
 
 baraja([[rojo,1], [rojo,1], [amarillo,1], [amarillo,1],[rojo, mas2],[amarillo, mas2],[cambio, color],
-         [rojo, salto], [rojo, salto]]).
+         [rojo, salto],[una, carta]]).
 
 % Barajar la baraja de cartas
 barajar(Barajeada):-
@@ -33,7 +34,7 @@ barajar(Barajeada):-
 % Repartir cartas a dos jugadores
 repartir_cartas(Jugador1, Jugador2, Centro, Mazo):-
     barajar(Barajeada), % Baraja las cartas
-    repartir_cartas_aux(1,Barajeada, Jugador1, Jugador2, Centro, Mazo).
+    repartir_cartas_aux(2,Barajeada, Jugador1, Jugador2, Centro, Mazo).
 
 % Repartir cartas auxiliar
 % Caso base: los dos jugadores no tienen cartas y el contador esta en 0.
@@ -66,7 +67,9 @@ agregar_carta(N, [Carta1|Resto], Jugador, Mazo, Resultado):-
 % Regla para ver si se puede jugar esa carta.
 puede_jugar(Carta, [Color, Numero]):- 
     Carta = [Color, _] ; Carta = [_, Numero] ;
-    [Color, Numero] = [cambio, color].
+    [Color, Numero] = [cambio, color]; 
+    [Color, Numero] = [cambio, mazo];
+    [Color, Numero] = [una, carta].
 
 eliminar_carta(_, [], []).
 eliminar_carta(Carta, [Carta|Resto], Resto).
@@ -98,6 +101,14 @@ cambio_color(Carta, NuevaCarta):-
     write('Introduce el color al cual cambiar (ejemplo: rojo): '), nl, read(Nuevocolor),
     NuevaCarta = [Nuevocolor,cambiado].
 
+cambio_mazo(Carta):-
+    Carta = [_, mazo],
+    write('Se cambiaron los mazos de los jugadores'), nl.
+
+una_carta([Carta|_], JugadorNuevaMano):-
+    JugadorNuevaMano = [Carta],
+    write('Solo te quedaste con una carta'), nl.
+    
 escoge_turno(N, NuevoTurno):-
     ( N = 2,
      NuevoTurno = 1);
@@ -160,6 +171,21 @@ turno(N,Jugador, Contrincante, Centro, RestoBaraja, Paso):-
     NuevoPaso is Paso + 1,
     escoge_turno(N, NuevoTurno),
     turno(NuevoTurno, Contrincante, Jugador, Centro, RestoBaraja, NuevoPaso)
+    );
+    
+    (
+    Carta = [una, carta],
+    eliminar_carta(Carta, Jugador, JugadorSinCarta),
+    una_carta(JugadorSinCarta, JugadorNuevaMano),
+    escoge_turno(N, NuevoTurno),
+    turno(NuevoTurno, Contrincante, JugadorNuevaMano, Carta, RestoBaraja, 0)
+    );
+    
+    (
+    cambio_mazo(Carta),
+    eliminar_carta(Carta, Jugador, JugadorNuevaMano),
+   	escoge_turno(N,NuevoTurno), 
+    turno(NuevoTurno, JugadorNuevaMano, Contrincante, Centro, RestoBaraja, Paso)
     );
     
     (
