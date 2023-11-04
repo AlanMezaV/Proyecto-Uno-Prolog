@@ -50,7 +50,7 @@ repartir_cartas_aux(N, [Carta1, Carta2 | Resto], [Carta1 | Jugador1Resto],
 
 % Regla para agregar una carta a la mano del jugador
 agregar_carta(_,[],_,_,_):-
-    write('Se terminaron las cartas para agarrar'), nl,false.
+    write('Se terminaron las cartas para agarrar'),  nl, false.
 
 agregar_carta(0, Resto, Jugador, Mazo, Resultado):-
     Mazo = Resto,
@@ -65,7 +65,7 @@ agregar_carta(N, [Carta1|Resto], Jugador, Mazo, Resultado):-
 % Regla para ver si se puede jugar esa carta.
 puede_jugar(Carta, [Color, Numero]):- 
     Carta = [Color, _] ; Carta = [_, Numero] ;
-    Carta = [cambio, color].
+    [Color, Numero] = [cambio, color].
 
 eliminar_carta(_, [], []).
 eliminar_carta(Carta, [Carta|Resto], Resto).
@@ -74,7 +74,7 @@ eliminar_carta(Carta, [OtraCarta|Resto], [OtraCarta|NuevaMano]) :-
     eliminar_carta(Carta, Resto, NuevaMano).
 
 tiene_carta(Carta, Jugador):-
-    (not(member(Carta,Jugador)), Carta \= 'mas'),    
+    (not(member(Carta,Jugador)), Carta \= 'mas', Carta \= 'paso'),    
     write("No tienes esta carta!!"), nl.
 
 mas_carta(Carta, RestoBaraja, Jugador, NuevoMazo, Resultado):-
@@ -82,10 +82,10 @@ mas_carta(Carta, RestoBaraja, Jugador, NuevoMazo, Resultado):-
     agregar_carta(1, RestoBaraja, Jugador, NuevoMazo, Resultado),
     write("Se agrego una carta a tu mazo"), nl.
 
-mas2_carta(Carta, Contrincante, ContrincanteNuevoMazo, RestoBaraja, NuevoMazo):-
+masDos_carta(Carta, Contrincante, ContrincanteNuevoMazo, RestoBaraja, NuevoMazo):-
     Carta = [_, mas2],
     agregar_carta(2, RestoBaraja, Contrincante, NuevoMazo, ContrincanteNuevoMazo),
-    write('se le sumaron dos cartas al contrincante'), nl.
+    write('Se le sumaron dos cartas al contrincante'), nl.
     
 salto_carta(Carta, Centro):-
     Carta = [_, salto],
@@ -94,22 +94,34 @@ salto_carta(Carta, Centro):-
 
 cambio_color(Carta, NuevaCarta):-
     Carta = [_, color],
-    write('Introduce el color al cual cambiar: '), nl, read(Nuevocolor),
+    write('Introduce el color al cual cambiar (ejemplo: rojo): '), nl, read(Nuevocolor),
     NuevaCarta = [Nuevocolor,cambiado].
+
+escoge_turno(N, NuevoTurno):-
+    ( N = 2,
+     NuevoTurno = 1);
+    ( N = 1,
+      NuevoTurno = 2).
+
 
 % Predicado para el turno de un jugador
 %Caso base de turno para terminar el programa
-turno(_,[],[],_,[]):-
-    write('reiniciando juego'), nl,
+turno(_,[],[],_,[],_):-
+    write('Reiniciando juego'), nl,
     iniciar_juego.
 
-turno(N,_,[],_,_):-
+turno(_,_,_,_,_,2):-
+    write('Ya no quedan mas movimientos'), nl,
+    write('Reiniciando juego'), nl,
+    iniciar_juego.
+
+turno(N,_,[],_,_,_):-
     write('Se termino el Juego, gano el jugador '), 
     (( N = 2,  
      write(1),nl);
     ( N = 1,  
      write(2),nl)),
-    turno(N,[],[],_,[]).
+    turno(N,[],[],_,[],_).
 
 /*
 turno(_,_,_,_,[]):-
@@ -117,58 +129,60 @@ turno(_,_,_,_,[]):-
     turno(_,[],[],_,[]).
 */
 
-turno(N,Jugador, Contrincante, Centro, RestoBaraja):-
+turno(N,Jugador, Contrincante, Centro, RestoBaraja, Paso):-
     write("Jugador "), write(N), nl,
     write('Cartas en tu mano: '), write(Jugador), nl,
     write('Carta en la mesa: '), write(Centro),  nl,
    	write('Ingresa la carta a jugar (ejemplo [rojo,1])'), read(Carta), nl,
     (
     (tiene_carta(Carta, Jugador),
-    turno(N, Jugador, Contrincante, Centro, RestoBaraja));
+    turno(N, Jugador, Contrincante, Centro, RestoBaraja, Paso));
     
     (
     mas_carta(Carta, RestoBaraja, Jugador, NuevoMazo, Resultado),
-    turno(N, Resultado, Contrincante, Centro, NuevoMazo)
+    turno(N, Resultado, Contrincante, Centro, NuevoMazo, Paso)
     );
     
     (   
-    mas2_carta(Carta, Contrincante, ContrincanteNuevoMazo, RestoBaraja, NuevoMazo),
+    masDos_carta(Carta, Contrincante, ContrincanteNuevoMazo, RestoBaraja, NuevoMazo),
     eliminar_carta(Carta, Jugador, JugadorNuevaMano),
-    (( N = 2,
-     turno(1, ContrincanteNuevoMazo, JugadorNuevaMano, Carta, NuevoMazo));
-    ( N = 1, 
-     turno(2, ContrincanteNuevoMazo, JugadorNuevaMano, Carta, NuevoMazo)))
+    escoge_turno(N, NuevoTurno),
+    turno(NuevoTurno, ContrincanteNuevoMazo, JugadorNuevaMano, Carta, NuevoMazo, Paso)
+    );
+    
+    (   
+    Carta == 'paso',
+    NuevoPaso is Paso + 1,
+    escoge_turno(N, NuevoTurno),
+    turno(NuevoTurno, Contrincante, Jugador, Centro, RestoBaraja, NuevoPaso)
     );
     
     (
     salto_carta(Carta, Centro),
     eliminar_carta(Carta, Jugador, JugadorNuevaMano),
-    turno(N, JugadorNuevaMano, Contrincante, Carta, RestoBaraja)
+    turno(N, JugadorNuevaMano, Contrincante, Carta, RestoBaraja, Paso)
     );
     
     (
     cambio_color(Carta, NuevaCarta),
     eliminar_carta(Carta, Jugador, JugadorNuevaMano),
-	(( N = 2,
-     turno(1, Contrincante, JugadorNuevaMano, NuevaCarta, RestoBaraja));
-    ( N = 1, 
-     turno(2, Contrincante, JugadorNuevaMano, NuevaCarta, RestoBaraja)))
+	escoge_turno(N, NuevoTurno),
+    turno(NuevoTurno, Contrincante, JugadorNuevaMano, NuevaCarta, RestoBaraja, Paso)
     );
     
     puede_jugar(Carta, Centro);
     
     (
+    not(puede_jugar(Carta, Centro)),
     write("Esa carta no se puede poner, pon otra!"), nl,
-    turno(N, Jugador, Contrincante, Centro, RestoBaraja)
+    turno(N, Jugador, Contrincante, Centro, RestoBaraja, Paso)
     )
     ),
     
     eliminar_carta(Carta, Jugador, JugadorNuevaMano),
-    (( N = 2,
-     turno(1, Contrincante, JugadorNuevaMano, Carta, RestoBaraja));
-    ( N = 1, 
-     turno(2, Contrincante, JugadorNuevaMano, Carta, RestoBaraja))).
+    escoge_turno(N, NuevoTurno),
+    turno(NuevoTurno, Contrincante, JugadorNuevaMano, Carta, RestoBaraja, 0).
 
 iniciar_juego:-
     repartir_cartas(Jugador1, Jugador2, Centro, Mazo),
-    turno(1, Jugador1, Jugador2, Centro, Mazo).
+    turno(1, Jugador1, Jugador2, Centro, Mazo, 0).
