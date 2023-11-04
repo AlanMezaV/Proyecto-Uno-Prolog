@@ -16,14 +16,13 @@ baraja([[rojo,1], [rojo,2], [rojo,3], [rojo,4], [rojo,5],
         [amarillo,1], [amarillo,2], [amarillo,3], [amarillo,4], [amarillo,5],
         [amarillo,6], [amarillo,7], [amarillo,8], [amarillo,9],
         [rojo, salto], [verde, salto], [azul, salto], [amarillo, salto],
-        [rojo, salto], [verde, salto], [azul, salto], [amarillo, salto].
-        [cambio, color],[cambio, color],[cambio, color],[cambio, color].
+        [rojo, salto], [verde, salto], [azul, salto], [amarillo, salto],
+        [cambio, color],[cambio, color],[cambio, color],[cambio, color],
         [rojo, mas2], [verde, mas2], [azul, mas2], [amarillo, mas2],
         [rojo, mas2], [verde, mas2], [azul, mas2], [amarillo, mas2]]).
 */
 
-baraja([[rojo,1], [rojo,1], [rojo,1], [rojo,1], [rojo,1],
-         [cambio, color],[rojo, mas2],[rojo, mas2],[cambio, color],
+baraja([[rojo,1], [rojo,1], [amarillo,1], [amarillo,1],[rojo, mas2],[amarillo, mas2],[cambio, color],
          [rojo, salto], [rojo, salto]]).
 
 % Barajar la baraja de cartas
@@ -50,7 +49,9 @@ repartir_cartas_aux(N, [Carta1, Carta2 | Resto], [Carta1 | Jugador1Resto],
 
 % Regla para agregar una carta a la mano del jugador
 agregar_carta(_,[],_,_,_):-
-    write('Se terminaron las cartas para agarrar'),  nl, false.
+    write('Se terminaron las cartas para agarrar'), nl, 
+    write('Si ya no puedes hacer ningun movimiento escribe: paso'),nl, 
+    false.
 
 agregar_carta(0, Resto, Jugador, Mazo, Resultado):-
     Mazo = Resto,
@@ -103,6 +104,11 @@ escoge_turno(N, NuevoTurno):-
     ( N = 1,
       NuevoTurno = 2).
 
+escoge_turnoRepetido(N, NuevoTurno):-
+    ( N = 2,
+     NuevoTurno = 2);
+    ( N = 1,
+      NuevoTurno = 1).
 
 % Predicado para el turno de un jugador
 %Caso base de turno para terminar el programa
@@ -117,17 +123,15 @@ turno(_,_,_,_,_,2):-
 
 turno(N,_,[],_,_,_):-
     write('Se termino el Juego, gano el jugador '), 
-    (( N = 2,  
-     write(1),nl);
-    ( N = 1,  
-     write(2),nl)),
-    turno(N,[],[],_,[],_).
+    escoge_turno(N, NuevoTurno),
+    write(NuevoTurno), nl,
+    turno(NuevoTurno,[],[],_,[],_).
 
-/*
-turno(_,_,_,_,[]):-
-    write('Se termino el Juego, quedaron en empate.'), nl,
-    turno(_,[],[],_,[]).
-*/
+turno(N,[],_,_,_,_):-
+    write('Se termino el Juego, gano el jugador '), 
+	escoge_turnoRepetido(N, NuevoTurno),
+    write(NuevoTurno), nl,
+    turno(N,[],[],_,[],_).
 
 turno(N,Jugador, Contrincante, Centro, RestoBaraja, Paso):-
     write("Jugador "), write(N), nl,
@@ -144,6 +148,7 @@ turno(N,Jugador, Contrincante, Centro, RestoBaraja, Paso):-
     );
     
     (   
+    puede_jugar(Carta, Centro),
     masDos_carta(Carta, Contrincante, ContrincanteNuevoMazo, RestoBaraja, NuevoMazo),
     eliminar_carta(Carta, Jugador, JugadorNuevaMano),
     escoge_turno(N, NuevoTurno),
